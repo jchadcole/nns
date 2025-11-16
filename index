@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NumberUP Guitar</title>
+    <style>
+        /* --- 1. Global & Theme --- */
+        :root {
+            --bg-color: #1a1a1e;
+            --text-color: #f0f0f5;
+            --primary-color: #ff9800; /* Guitar/Wood Orange */
+            --primary-text: #1a1a1e;
+            --card-color: #2c2c32;
+            --correct-color: #4CAF50;
+            --incorrect-color: #f44336;
+            --border-color: #444;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        .app-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 1em;
+        }
+
+        h1, h2, h3 {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 1.5em;
+        }
+        
+        p, li {
+            line-height: 1.6;
+            font-size: 1.05em;
+        }
+        
+        strong {
+            color: var(--primary-color);
+        }
+
+        /* --- 2. Views & Navigation --- */
+        .view {
+            display: none; /* All views hidden by default */
+        }
+
+        .view.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- 3. Buttons --- */
+        button {
+            display: block;
+            width: 100%;
+            padding: 1em;
+            margin-top: 1em;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--primary-color);
+            color: var(--primary-text);
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+        
+        button:disabled {
+            background-color: #555;
+            color: #888;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+            margin-top: 0.5em; /* A bit less margin than primary */
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--primary-color);
+            color: var(--primary-text);
+            transform: none; /* Keep it simple */
+            opacity: 1;
+        }
+
+
+        /* --- 4. Learn Module --- */
+        .learn-card {
+            background-color: var(--card-color);
+            padding: 1.5em;
+            border-radius: 8px;
+            margin-bottom: 1.5em;
+        }
+
+        .learn-card h2 {
+            margin-top: 0;
+        }
+
+        .formula-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+            margin: 1.5em 0;
+        }
+
+        .formula-table th, .formula-table td {
+            border: 1px solid var(--border-color);
+            padding: 0.8em 0.5em;
+        }
+
+        .formula-table th {
+            background-color: #333;
+            font-size: 1.1em;
+        }
+        
+        .formula-table td:first-child {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .wwh-visual {
+            display: flex;
+            justify-content: space-between;
+            background: #111;
+            padding: 1em;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 1.1em;
+        }
+
+        /* --- NEW --- Progressions Page Style --- */
+        .progression-pill {
+            display: inline-block;
+            padding: 0.5em 1em;
+            margin: 0.5em 0.5em 0.5em 0;
+            border-radius: 20px; /* pill shape */
+            background-color: var(--bg-color); /* a bit darker than card */
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 600;
+            font-family: monospace; /* Good for numbers */
+            font-size: 1.1em;
+        }
+        
+        .progression-pill-lg {
+             display: block;
+             padding: 0.75em 1em;
+             margin-top: 0.5em;
+             font-size: 1.05em;
+             text-align: center;
+        }
+
+
+        /* --- 5. Practice Setup --- */
+        .key-selector {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .key-selector button {
+            width: auto;
+            padding: 1.2em 0.5em;
+            font-size: 1em;
+            background-color: var(--card-color);
+            color: var(--text-color);
+            border: 2px solid var(--border-color);
+        }
+
+        .key-selector button:hover {
+            border-color: var(--primary-color);
+            transform: none;
+            opacity: 1;
+        }
+        
+        .key-selector button.selected {
+            background-color: var(--primary-color);
+            color: var(--primary-text);
+            border-color: var(--primary-color);
+        }
+
+        /* --- 6. Practice Quiz --- */
+        .practice-question-area {
+            text-align: center;
+            margin: 2em 0;
+            font-size: 1.3em;
+        }
+        
+        .practice-answer-options button {
+            background-color: var(--card-color);
+            color: var(--text-color);
+            border: 2px solid var(--border-color);
+        }
+
+        .practice-answer-options button.correct {
+            background-color: var(--correct-color) !important;
+            color: white !important;
+            border-color: var(--correct-color) !important;
+        }
+
+        .practice-answer-options button.incorrect {
+            background-color: var(--incorrect-color) !important;
+            color: white !important;
+            border-color: var(--incorrect-color) !important;
+        }
+
+        .practice-feedback {
+            text-align: center;
+            font-size: 1.1em;
+            margin-top: 1.5em;
+            min-height: 2em;
+        }
+
+        #btn-next-question {
+            display: none; /* Hidden until answer is selected */
+        }
+
+        /* --- 7. Key Challenge --- */
+        .key-challenge-chart {
+            display: grid;
+            gap: 0.8em;
+            margin: 2em 0;
+        }
+        
+        .key-challenge-row {
+            display: grid;
+            grid-template-columns: 2em 1fr 1fr;
+            gap: 0.5em;
+            align-items: center;
+        }
+        
+        .key-challenge-row span {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: var(--primary-color);
+            text-align: right;
+        }
+        
+        .key-challenge-row input,
+        .key-challenge-row select {
+            width: 100%;
+            font-size: 1.1em;
+            padding: 0.7em;
+            background-color: #333;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+        
+        .key-challenge-row.correct-row {
+            color: var(--correct-color);
+        }
+        .key-challenge-row.correct-row input,
+        .key-challenge-row.correct-row select {
+            border-color: var(--correct-color);
+            color: var(--correct-color);
+        }
+        
+        .key-challenge-row.incorrect-row {
+            color: var(--incorrect-color);
+        }
+        .key-challenge-row.incorrect-row input,
+        .key-challenge-row.incorrect-row select {
+            border-color: var(--incorrect-color);
+            color: var(--incorrect-color);
+        }
+
+        /* --- 8. Score Screen --- */
+        .score-display {
+            text-align: center;
+        }
+        .score-display h1 {
+            font-size: 5em;
+            margin: 0.2em 0;
+        }
+        .score-display p {
+            font-size: 1.2em;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <h1>🎸 NumberUP Guitar</h1>
+
+        <!-- =================================================== -->
+        <!-- VIEW 1: LEARN MODULE                                -->
+        <!-- =================================================== -->
+        <div id="view-learn" class="view active">
+            
+            <div class="learn-card">
+                <h2>What is the NNS?</h2>
+                <p>The <strong>Nashville Number System (NNS)</strong> is a simple "shortcut" musicians use. Instead of writing 'G, C, D,' they write '1, 4, 5.'</p>
+                <p><strong>Why?</strong> Because if the singer wants to change the key (e.g., from G to A), the song is <em>still</em> just '1, 4, 5'!</p>
+                <p>It's the ultimate "play in any key" cheat code. Let's learn the rules.</p>
+            </div>
+
+            <div class="learn-card">
+                <h2>The "Just Enough" Theory</h2>
+                <p>The system is built on the <strong>Major Scale</strong> (the 'Do-Re-Mi' scale). Every major scale uses the same pattern of <strong>Whole Steps (W)</strong> and <strong>Half Steps (H)</strong>.</p>
+                <p>A 'Half Step' is one fret. A 'Whole Step' is two frets.</p>
+                <div class="wwh-visual">
+                    <span>Root</span>
+                    <span>W</span>
+                    <span>W</span>
+                    <span>H</span>
+                    <span>W</span>
+                    <span>W</span>
+                    <span>W</span>
+                    <span>H</span>
+                </div>
+            </div>
+
+            <div class="learn-card">
+                <h2>The "Magic Formula" (The Chords)</h2>
+                <p>This is the most important part! Each number of the scale gets a specific <em>type</em> of chord. <strong>This pattern is the same for every key.</strong></p>
+                
+                <table class="formula-table">
+                    <thead>
+                        <tr>
+                            <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Major</strong></td>
+                            <td>minor</td>
+                            <td>minor</td>
+                            <td><strong>Major</strong></td>
+                            <td><strong>Major</strong></td>
+                            <td>minor</td>
+                            <td>diminished</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p><strong>Easy way to remember:</strong> 1, 4, & 5 are <strong>Major</strong>. 2, 3, & 6 are <strong>minor</strong>. (Don't worry about the 7 for now!)</p>
+            </div>
+            
+            <div class="learn-card">
+                <h2>Example: The Key of G</h2>
+                <p>Let's put it all together.
+                    <ul>
+                        <li><strong>Key:</strong> G (so, <strong>1 = G</strong>)</li>
+                        <li><strong>Scale (WWHWWWH):</strong> G - A - B - C - D - E - F#</li>
+                        <li><strong>Chords (The Formula):</strong></li>
+                        <li><strong>1</strong> = G <strong>Major</strong></li>
+                        <li><strong>2</strong> = A <strong>minor</strong></li>
+                        <li><strong>3</strong> = B <strong>minor</strong></li>
+                        <li><strong>4</strong> = C <strong>Major</strong></li>
+                        <li><strong>5</strong> = D <strong>Major</strong></li>
+                        <li><strong>6</strong> = E <strong>minor</strong></li>
+                        <li><strong>7</strong> = F# <strong>diminished</strong></li>
+                    </ul>
+                <p>So, a '1-4-5' song in G is: <strong>G - C - D</strong>. A '1-6-4-5' song is <strong>G - Em - C - D</strong>.</p>
+            </div>
+
+            <button id="btn-goto-setup">Let's Practice!</button>
+            <button id="btn-goto-progressions" class="btn-secondary">Common Progressions</button>
+
+        </div>
+
+        <!-- =================================================== -->
+        <!-- VIEW 2: PRACTICE SETUP                            -->
+        <!-- =================================================== -->
+        <div id="view-setup" class="view">
+            <h2>Practice Setup</h2>
+
+            <h3>1. Select Your Key</h3>
+            <div class="key-selector">
+                <button data-key="C">C</button>
+                <button data-key="G">G</button>
+                <button data-key="D">D</button>
+                <button data-key="A">A</button>
+                <button data-key="E">E</button>
+                <button data-key="B">B</button>
+                <button data-key="F#">F#</button>
+                <button data-key="Db">Db</button>
+                <button data-key="F">F</button>
+                <button data-key="Bb">Bb</button>
+                <button data-key="Eb">Eb</button>
+                <button data-key="Ab">Ab</button>
+            </div>
+            <button id="btn-random-key">Choose for Me!</button>
+
+            <h3>2. Select Your Challenge</h3>
+            <button id="btn-start-quiz" disabled>Quiz Mode (Find the Chord)</button>
+            <button id="btn-start-key-challenge" disabled>Key Challenge (Fill the Chart)</button>
+
+            <hr style="border-color: var(--border-color); margin: 2em 0 1em;">
+            <button id="btn-back-to-learn" class="btn-secondary">Back to Learn</button>
+        </div>
+
+        <!-- =================================================== -->
+        <!-- VIEW 3: PRACTICE QUIZ                             -->
+        <!-- =================================================== -->
+        <div id="view-practice" class="view">
+            <h2 id="practice-title">Key of G - Question 1/10</h2>
+            <div class="practice-question-area">
+                <p id="practice-question">What is the <strong>4</strong> chord?</p>
+            </div>
+            <div id="practice-answer-options" class="practice-answer-options">
+                <!-- Buttons dynamically generated by JS -->
+            </div>
+            <div id="practice-feedback" class="practice-feedback"></div>
+            <button id="btn-next-question">Next</button>
+            <button id="btn-exit-quiz" class="btn-secondary">Exit Quiz</button>
+        </div>
+        
+        <!-- =================================================== -->
+        <!-- VIEW 4: KEY CHALLENGE                             -->
+        <!-- =================================================== -->
+        <div id="view-key-challenge" class="view">
+            <h2>Key Challenge: <span id="key-challenge-title"></span></h2>
+            <p>Fill in the correct note and chord quality for all 7 numbers.</p>
+            
+            <div id="key-challenge-chart" class="key-challenge-chart">
+                <!-- Rows generated by JS -->
+            </div>
+            
+            <div id="key-challenge-feedback" class="practice-feedback"></div>
+            <button id="btn-check-key-challenge">Check My Answers</button>
+            <button id="btn-back-to-setup-from-challenge" class="btn-secondary">Back to Setup</button>
+        </div>
+
+        <!-- =================================================== -->
+        <!-- VIEW 5: SCORE SCREEN                              -->
+        <!-- =================================================== -->
+        <div id="view-score" class="view">
+            <div class="score-display">
+                <h2>Session Complete!</h2>
+                <h1 id="score-display">8/10</h1>
+                <p id="score-feedback-text">Great work! You've mastered the 1, 4, and 5.</p>
+            </div>
+
+            <button id="btn-practice-again">Practice Again (Same Key)</button>
+            <button id="btn-try-new-key">Try a New Key</button>
+        </div>
+        
+        <!-- =================================================== -->
+        <!-- VIEW 6: COMMON PROGRESSIONS (NEW)                 -->
+        <!-- =================================================== -->
+        <div id="view-progressions" class="view">
+            <h2>Common Progressions</h2>
+            <p>See how these numbers are used in real music! (Uppercase = Major, lowercase = minor)</p>
+
+            <div class="learn-card">
+                <h3>Pop & Rock</h3>
+                <p>The bread and butter of modern music. The <strong>6</strong> is the 'relative minor' and often used for a slightly sad or emotional feel.</p>
+                <div class="progression-pill">1 - 5 - 6 - 4</div>
+                <div class="progression-pill">1 - 4 - 5</div>
+                <div class="progression-pill">6 - 4 - 1 - 5</div>
+                <div class="progression-pill">1 - 6 - 4 - 5</div>
+            </div>
+
+            <div class="learn-card">
+                <h3>Blues</h3>
+                <p>The classic 12-bar blues format. This is the foundation of rock and roll. The 5 often becomes a 5(7) or 'dominant 7th' chord.</p>
+                <div class="progression-pill progression-pill-lg">1 - 1 - 1 - 1</div>
+                <div class="progression-pill progression-pill-lg">4 - 4 - 1 - 1</div>
+                <div class="progression-pill progression-pill-lg">5 - 4 - 1 - 1 (or 5)</div>
+            </div>
+            
+            <div class="learn-card">
+                <h3>Folk & Country</h3>
+                <p>Simple, strong, and story-driven. These progressions are all about clear resolution back to the <strong>1</strong>.</p>
+                <div class="progression-pill">1 - 4 - 5</div>
+                <div class="progression-pill">1 - 5 - 4</div>
+                <div class="progression-pill">1 - 4 - 1 - 5 - 1</div>
+                <div class="progression-pill">2 - 5 - 1</div>
+            </div>
+
+            <button id="btn-back-to-learn-from-prog" class="btn-secondary">Back to Learn</button>
+        </div>
+
+
+    </div> <!-- /app-container -->
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- 1. Audio Context for Feedback ---
+            let audioCtx;
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.warn("Web Audio API is not supported in this browser.");
+            }
+
+            function playSound(type) {
+                if (!audioCtx) return;
+                
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.01);
+                
+                if (type === 'correct') {
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                    oscillator.frequency.linearRampToValueAtTime(783.99, audioCtx.currentTime + 0.1); // G5
+                } else if (type === 'incorrect') {
+                    oscillator.type = 'square';
+                    oscillator.frequency.setValueAtTime(130.81, audioCtx.currentTime); // C3
+                }
+
+                oscillator.start(audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.2);
+                oscillator.stop(audioCtx.currentTime + 0.2);
+            }
+
+            // --- 2. Music Theory "Brain" ---
+            const notes = {
+                'sharps': ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'],
+                'flats':  ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
+            };
+            const flatKeys = ['F', 'Bb', 'Eb', 'Ab', 'Db', 'Gb'];
+            const majorScalePattern = [0, 2, 4, 5, 7, 9, 11]; // WWHWWWH in half-steps
+            const chordQualities = ['Maj', 'min', 'min', 'Maj', 'Maj', 'min', 'dim'];
+
+            function getScaleChords(rootNote) {
+                const noteSet = flatKeys.includes(rootNote) ? notes.flats : notes.sharps;
+                const startIndex = noteSet.indexOf(rootNote);
+                let scaleChords = [];
+
+                if (startIndex === -1) {
+                    // Fallback for C#, F#, etc. which are in the sharp list but root is 'Db'
+                    const sharpIndex = notes.sharps.indexOf(rootNote);
+                    if (sharpIndex !== -1) {
+                        return getScaleChords(notes.flats[sharpIndex]);
+                    }
+                    console.error("Root note not found:", rootNote);
+                    return [];
+                }
+
+                for (let i = 0; i < 7; i++) {
+                    const noteIndex = (startIndex + majorScalePattern[i]) % 12;
+                    scaleChords.push({
+                        number: i + 1,
+                        note: noteSet[noteIndex],
+                        quality: chordQualities[i]
+                    });
+                }
+                return scaleChords;
+            }
+
+            // --- 3. State Management ---
+            let currentKey = '';
+            let currentKeyChords = [];
+            let currentScore = 0;
+            let questionCount = 0;
+            const totalQuestions = 10;
+            let quizQuestions = [];
+
+            // --- 4. DOM Element References ---
+            const views = document.querySelectorAll('.view');
+            
+            // View 1
+            const btnGotoSetup = document.getElementById('btn-goto-setup');
+            const btnGotoProgressions = document.getElementById('btn-goto-progressions');
+
+            // View 2
+            const viewSetup = document.getElementById('view-setup');
+            const keySelector = viewSetup.querySelector('.key-selector');
+            const btnRandomKey = document.getElementById('btn-random-key');
+            const btnStartQuiz = document.getElementById('btn-start-quiz');
+            const btnStartKeyChallenge = document.getElementById('btn-start-key-challenge');
+            const btnBackToLearn = document.getElementById('btn-back-to-learn');
+            
+            // View 3
+            const practiceTitle = document.getElementById('practice-title');
+            const practiceQuestion = document.getElementById('practice-question');
+            const practiceAnswerOptions = document.getElementById('practice-answer-options');
+            const practiceFeedback = document.getElementById('practice-feedback');
+            const btnNextQuestion = document.getElementById('btn-next-question');
+            const btnExitQuiz = document.getElementById('btn-exit-quiz');
+
+            // View 4
+            const keyChallengeTitle = document.getElementById('key-challenge-title');
+            const keyChallengeChart = document.getElementById('key-challenge-chart');
+            const keyChallengeFeedback = document.getElementById('key-challenge-feedback');
+            const btnCheckKeyChallenge = document.getElementById('btn-check-key-challenge');
+            const btnBackToSetupFromChallenge = document.getElementById('btn-back-to-setup-from-challenge');
+
+            // View 5
+            const scoreDisplay = document.getElementById('score-display');
+            const scoreFeedbackText = document.getElementById('score-feedback-text');
+            const btnPracticeAgain = document.getElementById('btn-practice-again');
+            const btnTryNewKey = document.getElementById('btn-try-new-key');
+
+            // View 6
+            const btnBackToLearnFromProg = document.getElementById('btn-back-to-learn-from-prog');
+
+
+            // --- 5. View Navigation ---
+            function showView(viewId) {
+                // On mobile, scroll to top when changing views
+                window.scrollTo(0, 0);
+                views.forEach(view => {
+                    view.classList.remove('active');
+                });
+                document.getElementById(viewId).classList.add('active');
+            }
+
+            // Nav Listeners
+            btnGotoSetup.addEventListener('click', () => showView('view-setup'));
+            btnBackToLearn.addEventListener('click', () => showView('view-learn'));
+            btnTryNewKey.addEventListener('click', () => showView('view-setup'));
+            btnBackToSetupFromChallenge.addEventListener('click', () => showView('view-setup'));
+            btnExitQuiz.addEventListener('click', () => showView('view-setup'));
+            
+            btnGotoProgressions.addEventListener('click', () => showView('view-progressions'));
+            btnBackToLearnFromProg.addEventListener('click', () => showView('view-learn'));
+
+
+            // --- 6. Practice Setup Logic ---
+            keySelector.addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON') {
+                    // Remove 'selected' from all
+                    keySelector.querySelectorAll('button').forEach(btn => btn.classList.remove('selected'));
+                    // Add 'selected' to clicked
+                    e.target.classList.add('selected');
+                    
+                    currentKey = e.target.dataset.key;
+                    currentKeyChords = getScaleChords(currentKey);
+                    
+                    // Enable challenge buttons
+                    btnStartQuiz.disabled = false;
+                    btnStartKeyChallenge.disabled = false;
+                }
+            });
+
+            btnRandomKey.addEventListener('click', () => {
+                const allKeys = Array.from(keySelector.querySelectorAll('button'));
+                const randomButton = allKeys[Math.floor(Math.random() * allKeys.length)];
+                randomButton.click();
+            });
+
+            btnStartQuiz.addEventListener('click', () => {
+                startQuiz();
+                showView('view-practice');
+            });
+
+            btnStartKeyChallenge.addEventListener('click', () => {
+                buildKeyChallenge();
+                showView('view-key-challenge');
+            });
+            
+            btnPracticeAgain.addEventListener('click', () => {
+                startQuiz();
+                showView('view-practice');
+            });
+
+            // --- 7. Practice Quiz Logic ---
+            function startQuiz() {
+                currentScore = 0;
+                questionCount = 0;
+                generateQuizQuestions();
+                showNextQuestion();
+            }
+
+            function generateQuizQuestions() {
+                quizQuestions = [];
+                for (let i = 0; i < totalQuestions; i++) {
+                    // *** BUG FIX HERE ***
+                    const correctChordIndex = Math.floor(Math.random() * 7); // Was Math.random
+                    const correctChord = currentKeyChords[correctChordIndex];
+                    
+                    let options = [correctChord];
+                    while (options.length < 4) {
+                        // *** BUG FIX HERE ***
+                        const wrongChordIndex = Math.floor(Math.random() * 7); // Was Math.random
+                        const wrongChord = currentKeyChords[wrongChordIndex];
+                        
+                        // Ensure no duplicates
+                        if (wrongChord && !options.find(opt => opt.note === wrongChord.note && opt.quality === wrongChord.quality)) {
+                            options.push(wrongChord);
+                        }
+                    }
+                    
+                    // Shuffle options
+                    options.sort(() => Math.random() - 0.5);
+                    
+                    quizQuestions.push({
+                        questionText: `What is the <strong>${correctChord.number}</strong> chord?`,
+                        correctAnswer: correctChord,
+                        options: options
+                    });
+                }
+            }
+
+            function showNextQuestion() {
+                if (questionCount >= totalQuestions) {
+                    showScore();
+                    return;
+                }
+
+                const q = quizQuestions[questionCount];
+                
+                // Check if question generation failed (shouldn't happen now)
+                if (!q) {
+                    console.error("Failed to generate question. Aborting quiz.");
+                    alert("An error occurred starting the quiz. Please try again.");
+                    showView('view-setup');
+                    return;
+                }
+
+                practiceTitle.innerText = `Key of ${currentKey} - Question ${questionCount + 1}/${totalQuestions}`;
+                practiceQuestion.innerHTML = q.questionText;
+                
+                practiceAnswerOptions.innerHTML = '';
+                q.options.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.innerText = `${opt.note} ${opt.quality}`;
+                    btn.dataset.note = opt.note;
+                    btn.dataset.quality = opt.quality;
+                    practiceAnswerOptions.appendChild(btn);
+                });
+
+                practiceFeedback.innerText = '';
+                btnNextQuestion.style.display = 'none';
+                questionCount++;
+            }
+
+            practiceAnswerOptions.addEventListener('click', (e) => {
+                if (e.target.tagName !== 'BUTTON') return;
+                
+                // Disable all buttons
+                practiceAnswerOptions.querySelectorAll('button').forEach(btn => btn.disabled = true);
+                
+                const selectedNote = e.target.dataset.note;
+                const selectedQuality = e.target.dataset.quality;
+                const correct = quizQuestions[questionCount - 1].correctAnswer;
+
+                if (selectedNote === correct.note && selectedQuality === correct.quality) {
+                    // Correct
+                    e.target.classList.add('correct');
+                    practiceFeedback.innerText = '✅ Correct!';
+                    currentScore++;
+                    playSound('correct');
+                } else {
+                    // Incorrect
+                    e.target.classList.add('incorrect');
+                    // Find and highlight the correct one
+                    practiceAnswerOptions.querySelectorAll('button').forEach(btn => {
+                        if (btn.dataset.note === correct.note && btn.dataset.quality === correct.quality) {
+                            btn.classList.add('correct');
+                        }
+                    });
+                    practiceFeedback.innerText = `❌ Not quite. The ${correct.number} is ${correct.note} ${correct.quality}.`;
+                    playSound('incorrect');
+                }
+                
+                btnNextQuestion.style.display = 'block';
+            });
+
+            btnNextQuestion.addEventListener('click', showNextQuestion);
+
+            // --- 8. Key Challenge Logic ---
+            function buildKeyChallenge() {
+                keyChallengeTitle.innerText = currentKey;
+                keyChallengeChart.innerHTML = '';
+                keyChallengeFeedback.innerText = '';
+                
+                const noteOptions = notes.sharps.concat(notes.flats)
+                    .filter((v, i, a) => a.indexOf(v) === i) // Unique
+                    .sort();
+                
+                const qualityOptions = ['Maj', 'min', 'dim'];
+
+                for (let i = 0; i < 7; i++) {
+                    const row = document.createElement('div');
+                    row.className = 'key-challenge-row';
+                    row.dataset.index = i;
+                    
+                    const num = document.createElement('span');
+                    num.innerText = `${i + 1}:`;
+                    
+                    const noteSelect = document.createElement('select');
+                    noteSelect.className = 'note-input';
+                    noteSelect.innerHTML = `<option value="">-- Note --</option>` + 
+                        noteOptions.map(n => `<option value="${n}">${n}</option>`).join('');
+                    
+                    const qualitySelect = document.createElement('select');
+                    qualitySelect.className = 'quality-select';
+                    qualitySelect.innerHTML = `<option value="">-- Quality --</option>` +
+                        qualityOptions.map(q => `<option value="${q}">${q}</option>`).join('');
+
+                    row.appendChild(num);
+                    row.appendChild(noteSelect);
+                    row.appendChild(qualitySelect);
+                    keyChallengeChart.appendChild(row);
+                }
+            }
+
+            btnCheckKeyChallenge.addEventListener('click', () => {
+                let correctCount = 0;
+                const rows = keyChallengeChart.querySelectorAll('.key-challenge-row');
+                
+                rows.forEach(row => {
+                    const index = parseInt(row.dataset.index, 10);
+                    const correctChord = currentKeyChords[index];
+                    
+                    const userNote = row.querySelector('.note-input').value;
+                    const userQuality = row.querySelector('.quality-select').value;
+                    
+                    // Reset classes
+                    row.classList.remove('correct-row', 'incorrect-row');
+
+                    // Check for equivalent notes (e.g., F# vs Gb)
+                    const noteSet = flatKeys.includes(currentKey) ? notes.flats : notes.sharps;
+                    const altNoteSet = flatKeys.includes(currentKey) ? notes.sharps : notes.flats;
+                    const correctNoteIndex = noteSet.indexOf(correctChord.note);
+                    const altCorrectNote = altNoteSet[correctNoteIndex];
+
+                    const isNoteCorrect = (userNote === correctChord.note || userNote === altCorrectNote);
+                    const isQualityCorrect = (userQuality === correctChord.quality);
+                    
+                    if (isNoteCorrect && isQualityCorrect) {
+                        row.classList.add('correct-row');
+                        correctCount++;
+                    } else {
+                        row.classList.add('incorrect-row');
+                    }
+                });
+
+                if (correctCount === 7) {
+                    keyChallengeFeedback.innerText = `✅ Perfect! You nailed the key of ${currentKey}!`;
+                    playSound('correct');
+                } else {
+                    keyChallengeFeedback.innerText = `❌ You got ${correctCount}/7 correct. Keep trying!`;
+                    playSound('incorrect');
+S
+                }
+            });
+
+            // --- 9. Score Screen Logic ---
+            function showScore() {
+                showView('view-score');
+                scoreDisplay.innerText = `${currentScore}/${totalQuestions}`;
+                
+                let feedback = '';
+                const percentage = currentScore / totalQuestions;
+                if (percentage === 1) {
+                    feedback = 'Perfect Score! You\'re a pro!';
+                } else if (percentage >= 0.8) {
+                    feedback = 'Great work! You\'ve really got this.';
+                } else if (percentage >= 0.5) {
+                    feedback = 'Nice job! A little more practice and you\'ll be set.';
+                } else {
+                    feedback = 'Keep practicing! Go review the "Learn" section.';
+                }
+                scoreFeedbackText.innerText = feedback;
+            }
+
+            // --- 10. Initial App Load ---
+            showView('view-learn'); // Start on the "Learn" screen
+        });
+    </script>
+</body>
+</html>
